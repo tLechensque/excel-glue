@@ -126,6 +126,17 @@ export const ProcessingStep: React.FC<ProcessingStepProps> = ({
       const standardHeaders = ['name', 'sku', 'simple_description', 'full_description', 'cost_price', 'sell_price', 'brand', 'unit', 'category_id'];
       const processedData: any[][] = [standardHeaders];
 
+      // Map system field keys to standard headers
+      const fieldToHeaderMap: Record<string, string> = {
+        'NOME': 'name',
+        'SKU': 'sku',
+        'DESCRICAO_COMPLETA': 'full_description',
+        'PRECO_CUSTO': 'cost_price',
+        'PRECO_VENDA': 'sell_price',
+        'CATEGORIA': 'category_id',
+        'ESTOQUE': 'unit'
+      };
+
       for (let i = 1; i < productData.length; i++) {
         const productRow = productData[i];
         const productKey = String(productRow[productKeyIndex] || '').trim();
@@ -138,10 +149,9 @@ export const ProcessingStep: React.FC<ProcessingStepProps> = ({
         standardHeaders.forEach(standardField => {
           let value = '';
           
-          // Find mapping for this standard field
+          // Find mapping for this standard field by looking through the field mapping
           const mapping = Object.entries(mappingConfig.fieldMapping).find(
-            ([field, _]) => field.toLowerCase() === standardField.toLowerCase() || 
-                           field === standardField
+            ([systemField, _]) => fieldToHeaderMap[systemField] === standardField
           );
           
           if (mapping) {
