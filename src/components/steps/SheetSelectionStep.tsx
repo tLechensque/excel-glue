@@ -81,19 +81,6 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
       </div>
 
       <div className="space-y-8">
-        {/* Debug Info */}
-        <Card className="p-4 bg-warning/5 border-warning/20">
-          <h3 className="font-medium mb-2 text-warning">Debug Info</h3>
-          <div className="text-xs space-y-1">
-            <div>Total sheets: {excelData.sheets.length}</div>
-            <div>Sheets: {JSON.stringify(excelData.sheets)}</div>
-            <div>Product sheet selected: {productSheet || 'None'}</div>
-            <div>Product columns: {productSheet ? getSheetColumns(productSheet).length : 0}</div>
-            <div>Image sheet selected: {imageSheet || 'None'}</div>
-            <div>Image columns: {imageSheet ? getSheetColumns(imageSheet).length : 0}</div>
-          </div>
-        </Card>
-
         {/* Available Sheets */}
         <Card className="p-4">
           <h3 className="font-medium mb-3">Abas Disponíveis</h3>
@@ -150,9 +137,9 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
                     </SelectTrigger>
                     <SelectContent>
                       {getSheetColumns(productSheet).length === 0 ? (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1 text-xs text-muted-foreground">
                           Nenhuma coluna encontrada
-                        </SelectItem>
+                        </div>
                       ) : (
                         getSheetColumns(productSheet).map((col, index) => (
                           <SelectItem key={`${col}-${index}`} value={col}>
@@ -209,9 +196,9 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
                     </SelectTrigger>
                     <SelectContent>
                       {getSheetColumns(imageSheet).length === 0 ? (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1 text-xs text-muted-foreground">
                           Nenhuma coluna encontrada
-                        </SelectItem>
+                        </div>
                       ) : (
                         getSheetColumns(imageSheet).map((col, index) => (
                           <SelectItem key={`${col}-${index}`} value={col}>
