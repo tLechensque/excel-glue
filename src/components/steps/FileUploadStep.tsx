@@ -27,15 +27,29 @@ export const FileUploadStep: React.FC<FileUploadStepProps> = ({ onFileUpload }) 
     }
 
     try {
+      console.log('Processing file:', file.name, 'Size:', file.size);
+      
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
       
       const sheets = workbook.SheetNames;
+      console.log('Found sheets:', sheets);
+      
       const data: Record<string, any[]> = {};
 
       sheets.forEach(sheetName => {
+        console.log('Processing sheet:', sheetName);
         const worksheet = workbook.Sheets[sheetName];
-        data[sheetName] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        // Use sheet_to_json with header: 1 to get raw array data
+        const sheetData = XLSX.utils.sheet_to_json(worksheet, { 
+          header: 1, 
+          defval: '', // Fill empty cells with empty string
+          raw: false // Convert all values to strings
+        });
+        
+        console.log(`Sheet ${sheetName} data:`, sheetData.slice(0, 3));
+        data[sheetName] = sheetData;
       });
 
       if (sheets.length === 0) {
@@ -47,6 +61,8 @@ export const FileUploadStep: React.FC<FileUploadStepProps> = ({ onFileUpload }) 
         return;
       }
 
+      console.log('Final processed data:', data);
+
       toast({
         title: "Arquivo carregado com sucesso!",
         description: `${sheets.length} aba(s) encontrada(s)`,
@@ -54,6 +70,7 @@ export const FileUploadStep: React.FC<FileUploadStepProps> = ({ onFileUpload }) 
 
       onFileUpload({ sheets, data });
     } catch (error) {
+      console.error('Error processing file:', error);
       toast({
         variant: "destructive",
         title: "Erro ao processar arquivo",

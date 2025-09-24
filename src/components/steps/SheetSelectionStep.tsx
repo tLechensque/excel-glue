@@ -24,9 +24,26 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
   const [imageColumn, setImageColumn] = useState<string>('');
 
   const getSheetColumns = (sheetName: string): string[] => {
-    if (!sheetName || !excelData.data[sheetName]) return [];
-    const firstRow = excelData.data[sheetName][0];
-    return firstRow ? firstRow.filter(col => col !== null && col !== undefined && col !== '') : [];
+    console.log('Getting columns for sheet:', sheetName);
+    if (!sheetName || !excelData.data[sheetName]) {
+      console.log('Sheet not found or no data:', sheetName);
+      return [];
+    }
+    const sheetData = excelData.data[sheetName];
+    console.log('Sheet data length:', sheetData.length);
+    console.log('First few rows:', sheetData.slice(0, 3));
+    
+    const firstRow = sheetData[0];
+    console.log('First row (headers):', firstRow);
+    
+    if (!firstRow || !Array.isArray(firstRow)) {
+      console.log('First row is not valid:', firstRow);
+      return [];
+    }
+    
+    const columns = firstRow.filter(col => col !== null && col !== undefined && col !== '');
+    console.log('Filtered columns:', columns);
+    return columns;
   };
 
   const getSheetPreview = (sheetName: string) => {
@@ -64,6 +81,19 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
       </div>
 
       <div className="space-y-8">
+        {/* Debug Info */}
+        <Card className="p-4 bg-warning/5 border-warning/20">
+          <h3 className="font-medium mb-2 text-warning">Debug Info</h3>
+          <div className="text-xs space-y-1">
+            <div>Total sheets: {excelData.sheets.length}</div>
+            <div>Sheets: {JSON.stringify(excelData.sheets)}</div>
+            <div>Product sheet selected: {productSheet || 'None'}</div>
+            <div>Product columns: {productSheet ? getSheetColumns(productSheet).length : 0}</div>
+            <div>Image sheet selected: {imageSheet || 'None'}</div>
+            <div>Image columns: {imageSheet ? getSheetColumns(imageSheet).length : 0}</div>
+          </div>
+        </Card>
+
         {/* Available Sheets */}
         <Card className="p-4">
           <h3 className="font-medium mb-3">Abas Disponíveis</h3>
@@ -93,7 +123,11 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
             <div className="space-y-4">
               <div>
                 <Label htmlFor="product-sheet">Selecione a aba de produtos</Label>
-                <Select value={productSheet} onValueChange={setProductSheet}>
+                <Select value={productSheet} onValueChange={(value) => {
+                  console.log('Product sheet selected:', value);
+                  setProductSheet(value);
+                  setProductColumn(''); // Clear column when sheet changes
+                }}>
                   <SelectTrigger id="product-sheet">
                     <SelectValue placeholder="Escolha uma aba..." />
                   </SelectTrigger>
@@ -115,13 +149,24 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
                       <SelectValue placeholder="Escolha a coluna..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {getSheetColumns(productSheet).map((col, index) => (
-                        <SelectItem key={index} value={col}>
-                          {col}
+                      {getSheetColumns(productSheet).length === 0 ? (
+                        <SelectItem value="" disabled>
+                          Nenhuma coluna encontrada
                         </SelectItem>
-                      ))}
+                      ) : (
+                        getSheetColumns(productSheet).map((col, index) => (
+                          <SelectItem key={`${col}-${index}`} value={col}>
+                            {col}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
+                  {getSheetColumns(productSheet).length === 0 && (
+                    <p className="text-xs text-destructive mt-1">
+                      Não foi possível carregar as colunas desta aba
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -137,7 +182,11 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
             <div className="space-y-4">
               <div>
                 <Label htmlFor="image-sheet">Selecione a aba de imagens</Label>
-                <Select value={imageSheet} onValueChange={setImageSheet}>
+                <Select value={imageSheet} onValueChange={(value) => {
+                  console.log('Image sheet selected:', value);
+                  setImageSheet(value);
+                  setImageColumn(''); // Clear column when sheet changes
+                }}>
                   <SelectTrigger id="image-sheet">
                     <SelectValue placeholder="Escolha uma aba..." />
                   </SelectTrigger>
@@ -159,13 +208,24 @@ export const SheetSelectionStep: React.FC<SheetSelectionStepProps> = ({
                       <SelectValue placeholder="Escolha a coluna..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {getSheetColumns(imageSheet).map((col, index) => (
-                        <SelectItem key={index} value={col}>
-                          {col}
+                      {getSheetColumns(imageSheet).length === 0 ? (
+                        <SelectItem value="" disabled>
+                          Nenhuma coluna encontrada
                         </SelectItem>
-                      ))}
+                      ) : (
+                        getSheetColumns(imageSheet).map((col, index) => (
+                          <SelectItem key={`${col}-${index}`} value={col}>
+                            {col}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
+                  {getSheetColumns(imageSheet).length === 0 && (
+                    <p className="text-xs text-destructive mt-1">
+                      Não foi possível carregar as colunas desta aba
+                    </p>
+                  )}
                 </div>
               )}
             </div>
