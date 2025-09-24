@@ -38,6 +38,29 @@ export const ProcessingStep: React.FC<ProcessingStepProps> = ({
     processData();
   }, []);
 
+  // Function to convert monetary values to standard format
+  const convertMonetaryValue = (value: any): string => {
+    if (!value || value === '') return '';
+    
+    let stringValue = String(value).trim();
+    
+    // Remove currency symbols and extra spaces
+    stringValue = stringValue.replace(/[R$€¥£\s]/g, '');
+    
+    // If value contains both comma and dot, treat as thousands separator + decimal
+    if (stringValue.includes('.') && stringValue.includes(',')) {
+      // Remove dots (thousands separator) and replace comma with dot (decimal)
+      stringValue = stringValue.replace(/\./g, '').replace(/,/g, '.');
+    } else if (stringValue.includes(',')) {
+      // Only comma - treat as decimal separator
+      stringValue = stringValue.replace(/,/g, '.');
+    }
+    
+    // Parse and format to ensure valid number
+    const numValue = parseFloat(stringValue);
+    return isNaN(numValue) ? '' : numValue.toFixed(2);
+  };
+
   const processData = async () => {
     try {
       setStatus({
@@ -99,19 +122,9 @@ export const ProcessingStep: React.FC<ProcessingStepProps> = ({
         }
       }
 
-      // Process products
-      const processedData: any[][] = [];
-      const outputHeaders: string[] = [];
-      
-      // Create headers from field mapping
-      Object.entries(mappingConfig.fieldMapping).forEach(([field, mapping]) => {
-        if (field !== 'IMAGENS') {
-          outputHeaders.push(field);
-        }
-      });
-      outputHeaders.push('IMAGENS'); // Always add IMAGENS at the end
-      
-      processedData.push(outputHeaders);
+      // Define standard output format based on the template
+      const standardHeaders = ['name', 'sku', 'simple_description', 'full_description', 'cost_price', 'sell_price', 'brand', 'unit', 'category_id'];
+      const processedData: any[][] = [standardHeaders];
 
       for (let i = 1; i < productData.length; i++) {
         const productRow = productData[i];
@@ -121,26 +134,33 @@ export const ProcessingStep: React.FC<ProcessingStepProps> = ({
 
         const outputRow: any[] = [];
         
-        // Map fields from configuration
-        Object.entries(mappingConfig.fieldMapping).forEach(([field, mapping]) => {
-          if (field === 'IMAGENS') return; // Handle separately
-          
+        // Map each standard field based on configuration
+        standardHeaders.forEach(standardField => {
           let value = '';
-          if (mapping.sheet === mappingConfig.productSheet) {
-            const colIndex = productHeaders.findIndex((h: any) => h === mapping.column);
-            if (colIndex !== -1) {
-              value = productRow[colIndex] || '';
+          
+          // Find mapping for this standard field
+          const mapping = Object.entries(mappingConfig.fieldMapping).find(
+            ([field, _]) => field.toLowerCase() === standardField.toLowerCase() || 
+                           field === standardField
+          );
+          
+          if (mapping) {
+            const [_, fieldMapping] = mapping;
+            if (fieldMapping.sheet === mappingConfig.productSheet) {
+              const colIndex = productHeaders.findIndex((h: any) => h === fieldMapping.column);
+              if (colIndex !== -1) {
+                value = productRow[colIndex] || '';
+                
+                // Apply monetary conversion for price fields
+                if (standardField === 'cost_price' || standardField === 'sell_price') {
+                  value = convertMonetaryValue(value);
+                }
+              }
             }
           }
-          // Note: For simplicity, we're primarily using product sheet data
-          // In a more complex scenario, you might also pull from image sheet
           
           outputRow.push(value);
         });
-
-        // Add images
-        const images = imageMap.get(productKey) || [];
-        outputRow.push(images.join(', '));
 
         processedData.push(outputRow);
 
