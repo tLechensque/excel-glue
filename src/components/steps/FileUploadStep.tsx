@@ -1,6 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Upload, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
@@ -12,6 +14,7 @@ interface FileUploadStepProps {
 
 export const FileUploadStep: React.FC<FileUploadStepProps> = ({ onFileUpload }) => {
   const { toast } = useToast();
+  const [startRow, setStartRow] = useState(5);
 
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -41,11 +44,12 @@ export const FileUploadStep: React.FC<FileUploadStepProps> = ({ onFileUpload }) 
         console.log('Processing sheet:', sheetName);
         const worksheet = workbook.Sheets[sheetName];
         
-        // Use sheet_to_json with header: 1 to get raw array data
+        // Use sheet_to_json with custom start row and header: 1 to get raw array data
         const sheetData = XLSX.utils.sheet_to_json(worksheet, { 
           header: 1, 
           defval: '', // Fill empty cells with empty string
-          raw: false // Convert all values to strings
+          raw: false, // Convert all values to strings
+          range: startRow - 1 // Start reading from the specified row (0-indexed)
         });
         
         console.log(`Sheet ${sheetName} data:`, sheetData.slice(0, 3));
@@ -77,7 +81,7 @@ export const FileUploadStep: React.FC<FileUploadStepProps> = ({ onFileUpload }) 
         description: "Não foi possível ler o arquivo Excel. Verifique se não está corrompido.",
       });
     }
-  }, [onFileUpload, toast]);
+  }, [onFileUpload, toast, startRow]);
 
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -102,6 +106,30 @@ export const FileUploadStep: React.FC<FileUploadStepProps> = ({ onFileUpload }) 
         <p className="text-muted-foreground">
           Faça o upload do arquivo Excel com múltiplas abas que deseja converter
         </p>
+      </div>
+
+      {/* Start Row Configuration */}
+      <div className="mb-6">
+        <Card className="p-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <Label htmlFor="start-row" className="text-sm font-medium">
+                Linha onde o cabeçalho começa:
+              </Label>
+              <Input
+                id="start-row"
+                type="number"
+                min="1"
+                value={startRow}
+                onChange={(e) => setStartRow(Number(e.target.value))}
+                className="mt-1 w-20"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p>Especifique em que linha estão os cabeçalhos das colunas no seu arquivo Excel.</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Upload Area */}
